@@ -1,0 +1,35 @@
+{
+  "profiles": {
+    "MyBGList": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "boardgames",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Staging"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:55222;http://localhost:55221"
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:5001;http://localhost:5000",
+      "nativeDebugging": true,
+      "sqlDebugging": true,
+      "use64Bit": true
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:40080",
+      "sslPort": 40443
+    }
+  }
+}
