@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35913.81 d17.13
+VisualStudioVersion = 17.13.35913.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyBGList", "MyBGList\MyBGList.csproj", "{4F21B2FF-2BA4-4391-9C19-B20C80DF1D4A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyBGList_ApiVersion", "MyBGList_ApiVersion\MyBGList_ApiVersion.csproj", "{F3483F9C-5596-47CC-90C8-544DCD9A6E1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{4F21B2FF-2BA4-4391-9C19-B20C80DF1D4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F21B2FF-2BA4-4391-9C19-B20C80DF1D4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F21B2FF-2BA4-4391-9C19-B20C80DF1D4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3483F9C-5596-47CC-90C8-544DCD9A6E1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3483F9C-5596-47CC-90C8-544DCD9A6E1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3483F9C-5596-47CC-90C8-544DCD9A6E1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3483F9C-5596-47CC-90C8-544DCD9A6E1A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

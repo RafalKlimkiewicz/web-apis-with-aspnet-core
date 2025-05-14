@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Mvc;
 
+using MyBGList.DTO;
 using MyBGList.Models;
 
 namespace MyBGList.Controllers
 {
-    [Route("[controller]")]
     [ApiController]
+    [Route("[controller]")]
     public class BoardGamesController : ControllerBase
     {
         private readonly ILogger<BoardGamesController> _logger;
@@ -16,31 +18,36 @@ namespace MyBGList.Controllers
         }
 
         [HttpGet(Name = "GetBoardGames")]
-        public IEnumerable<BoardGame> Get()
+        [EnableCors("AnyOrigin")]
+        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
+        public RestDTO<BoardGame[]> Get()
         {
-            return new[]
+            return new RestDTO<BoardGame[]>()
             {
-                new BoardGame() {
-                    Id = 1,
-                    Name = "Axis & Allies",
-                    Year = 1981,
-                    MinPlayers = 2,
-                    MaxPlayers = 5
+                Data = new BoardGame[] {
+                    new BoardGame() {
+                        Id = 1,
+                        Name = "Axis & Allies",
+                        Year = 1981,
+                        MinPlayers = 2,
+                        MaxPlayers = 5
+                    },
+                    new BoardGame() {
+                        Id = 2,
+                        Name = "Citadels",
+                        Year = 2000,
+                        MinPlayers = 2,
+                        MaxPlayers = 8
+                    },
+                    new BoardGame() {
+                        Id = 3,
+                        Name = "Terraforming Mars",
+                        Year = 2016,
+                        MinPlayers = 1,
+                        MaxPlayers = 5
+                    }
                 },
-                new BoardGame() {
-                    Id = 2,
-                    Name = "Citadels",
-                    Year = 2000,
-                    MinPlayers = 2,
-                    MaxPlayers = 8
-                },
-                new BoardGame() {
-                    Id = 3,
-                    Name = "Terraforming Mars",
-                    Year = 2016,
-                    MinPlayers = 1,
-                    MaxPlayers = 5
-                }
+                Links = new List<LinkDTO> { new(Url.Action(null, "BoardGames", null, Request.Scheme)!, "self", "GET") }
             };
         }
     }
