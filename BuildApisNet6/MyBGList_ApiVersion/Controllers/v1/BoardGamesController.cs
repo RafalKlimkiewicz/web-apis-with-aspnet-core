@@ -54,4 +54,14 @@ public class BoardGamesController : ControllerBase
             Links = new List<LinkDTO> { new(Url.Action(null, "BoardGames", null, Request.Scheme)!, "self", "GET") }
         };
     }
+
+
+    [HttpGet("cod/test")]
+    [EnableCors("AnyOrigin_GetOnly")]
+    [ResponseCache(NoStore = true)]
+    public IResult CodTest()
+    {
+        return Results.Text($"<script>window.alert('Your client supports JavaScript!\\r\\n\\r\\nServer time (UTC): {DateTime.UtcNow.ToString("o")}" +
+            $"\\r\\nClient time (UTC): ' + new Date().toISOString());</script><noscript>Your client does not support JavaScript</noscript>", "text/html");
+    }
 }
