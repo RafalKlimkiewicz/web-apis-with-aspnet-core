@@ -23,7 +23,7 @@ public class BoardGamesController : ControllerBase
 
     [HttpGet(Name = "GetBoardGames")]
     [EnableCors("AnyOrigin")]
-    [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
+    [ResponseCache(Location = ResponseCacheLocation.Client, Duration = 120)]
     public RestDTO<BoardGame[]> Get()
     {
         return new RestDTO<BoardGame[]>()
