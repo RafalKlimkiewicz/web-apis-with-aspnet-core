@@ -13,6 +13,9 @@ public class BoardGame
     public int Id { get; set; }
 
     [Required]
+    public int PublisherId { get; set; }
+
+    [Required]
     [MaxLength(200)]
     public string Name { get; set; } = null!;
 
@@ -63,6 +66,8 @@ public class BoardGame
     [Required]
     public int Flags { get; set; }
 
+    public Publisher? Publisher { get; set; }
     public ICollection<BoardGames_Domains>? BoardGames_Domains { get; set; }
     public ICollection<BoardGames_Mechanics>? BoardGames_Mechanics { get; set; }
+    public ICollection<BoardGames_Categories>? BoardGames_Categories { get; set; }
 }

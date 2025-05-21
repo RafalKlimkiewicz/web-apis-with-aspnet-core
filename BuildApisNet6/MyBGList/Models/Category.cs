@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyBGList.Models;
 
-[Table("Publishers")]
-public class Publisher
+public class Category
 {
     [Key]
     [Required]
@@ -20,5 +18,5 @@ public class Publisher
     [Required]
     public DateTime LastModifiedDate { get; set; }
 
-    public ICollection<BoardGame>? BoardGames { get; set; }
+    public ICollection<BoardGames_Categories>? BoardGames_Categories { get; set; }
 }

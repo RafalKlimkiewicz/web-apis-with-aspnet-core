@@ -15,5 +15,4 @@ public class BoardGames_Mechanics
 
     public BoardGame? BoardGame { get; set; }
     public Mechanic? Mechanic { get; set; }
-
 }
