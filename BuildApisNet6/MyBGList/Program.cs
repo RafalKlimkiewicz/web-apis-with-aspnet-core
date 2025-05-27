@@ -6,6 +6,11 @@ using MyBGList.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
+//secrects for staging env
+if (builder.Environment.IsStaging() || builder.Environment.EnvironmentName == "Staging")
+{
+    builder.Configuration.AddUserSecrets<Program>(optional: true, reloadOnChange: true);
+}
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -29,9 +34,13 @@ builder.Services.AddCors(options =>
         });
 });
 
+
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
+
+Console.WriteLine($"ASPNETCORE_ENVIRONMENT = {app.Environment.EnvironmentName}");
+
 
 app.Logger.LogInformation("Hosting environment: {Env}", app.Environment.EnvironmentName);
 Console.WriteLine($"ASPNETCORE_ENVIRONMENT = {app.Environment.EnvironmentName}");

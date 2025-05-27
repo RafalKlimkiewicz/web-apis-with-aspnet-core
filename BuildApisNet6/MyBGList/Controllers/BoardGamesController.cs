@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 using MyBGList.DTO;
 using MyBGList.Models;
@@ -22,13 +23,13 @@ namespace MyBGList.Controllers
         [HttpGet(Name = "GetBoardGames")]
         [EnableCors("AnyOrigin")]
         [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
-        public RestDTO<BoardGame[]> Get()
+        public async Task<RestDTO<BoardGame[]>> Get()
         {
             var query = _context.BoardGames;
 
             return new RestDTO<BoardGame[]>()
             {
-                Data = query.ToArray(),
+                Data = await query.ToArrayAsync(),
                 Links = new List<LinkDTO> { new(Url.Action(null, "BoardGames", null, Request.Scheme)!, "self", "GET") }
             };
         }
