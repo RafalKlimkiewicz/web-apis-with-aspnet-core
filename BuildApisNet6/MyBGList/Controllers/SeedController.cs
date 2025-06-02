@@ -29,7 +29,7 @@ public class SeedController : ControllerBase
     [HttpPut(Name = "Seed")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(NoStore = true)]
-    public async Task<ActionResult<SeedResult>> Seed()
+    public async Task<ActionResult<SeedResult>> Seed(int? id = null)
     {
         var config = new CsvConfiguration(CultureInfo.GetCultureInfo("pt-BR"))
         {
@@ -51,7 +51,9 @@ public class SeedController : ControllerBase
 
         foreach (var record in records)
         {
-            if (!record.ID.HasValue || string.IsNullOrEmpty(record.Name) || existingBoardGames.ContainsKey(record.ID.Value))
+            if (!record.ID.HasValue || string.IsNullOrEmpty(record.Name) 
+                || existingBoardGames.ContainsKey(record.ID.Value)
+                || (id.HasValue && id.Value != record.ID.Value))
             {
                 skippedRows++;
                 continue;
