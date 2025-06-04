@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 using MyBGList.Models;
+using MyBGList.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
@@ -14,7 +16,13 @@ if (builder.Environment.IsStaging() || builder.Environment.EnvironmentName == "S
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(opts => opts.ResolveConflictingActions(apiDesc => apiDesc.First()));
+builder.Services.AddSwaggerGen(options =>
+{
+    options.ParameterFilter<SortColumnFilter>();
+    options.ParameterFilter<SortOrderFilter>();
+    options.ResolveConflictingActions(apiDesc => apiDesc.First());
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "MyBGList", Version = "v1.0" });
+});
 
 builder.Services.AddCors(options =>
 {
