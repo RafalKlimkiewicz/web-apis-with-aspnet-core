@@ -93,22 +93,35 @@ else
     });
 
 app.MapGet("/error",
-[EnableCors("AnyOrigin")]
-[ResponseCache(NoStore = true)]
-(HttpContext context) =>
+    [EnableCors("AnyOrigin")]
+[ResponseCache(NoStore = true)] (HttpContext context) =>
     {
-        var exceptionHandler = context.Features.Get<IExceptionHandlerPathFeature>();
+        var exceptionHandler =
+            context.Features.Get<IExceptionHandlerPathFeature>();
 
-        // TODO: logging, sending notifications, and more 
         var details = new ProblemDetails();
 
         details.Detail = exceptionHandler?.Error.Message;
         details.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id ?? context.TraceIdentifier;
-        details.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1";
-        details.Status = StatusCodes.Status500InternalServerError;
+
+        if (exceptionHandler?.Error is NotImplementedException)
+        {
+            details.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.2";
+            details.Status = StatusCodes.Status501NotImplemented;
+        }
+        else if (exceptionHandler?.Error is TimeoutException)
+        {
+            details.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.5";
+            details.Status = StatusCodes.Status504GatewayTimeout;
+        }
+        else
+        {
+            details.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1";
+            details.Status = StatusCodes.Status500InternalServerError;
+        }
 
         return Results.Problem(details);
-    }).RequireCors("AnyOrigin");
+    }); //.RequireCors("AnyOrigin");
 
 app.MapGet("/cod/test", [EnableCors("AnyOrigin")][ResponseCache(NoStore = true)] () =>
    Results.Text("<script>" +

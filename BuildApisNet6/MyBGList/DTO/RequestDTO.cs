@@ -31,7 +31,7 @@ namespace MyBGList.DTO
 
             var result = validator.GetValidationResult(SortColumn, validationContext);
 
-            return (result != null) ? new[] { result } : new ValidationResult[0];
+            return (result != null) ? new[] { result } : Array.Empty<ValidationResult>();
         }
     }
 }
