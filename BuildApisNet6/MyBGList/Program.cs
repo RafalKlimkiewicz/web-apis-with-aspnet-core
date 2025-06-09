@@ -14,7 +14,14 @@ if (builder.Environment.IsStaging() || builder.Environment.EnvironmentName == "S
     builder.Configuration.AddUserSecrets<Program>(optional: true, reloadOnChange: true);
 }
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.ModelBindingMessageProvider.SetValueIsInvalidAccessor((x) => $"The value '{x}' is invalid.");
+    options.ModelBindingMessageProvider.SetValueMustBeANumberAccessor((x) => $"The field {x} must be a number.");
+    options.ModelBindingMessageProvider.SetAttemptedValueIsInvalidAccessor((x, y) => $"The value '{x}' is not valid for {y}.");
+    options.ModelBindingMessageProvider.SetMissingKeyOrValueAccessor(() => $"A value is required.");
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

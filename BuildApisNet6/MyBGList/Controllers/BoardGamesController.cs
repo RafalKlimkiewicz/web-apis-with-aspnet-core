@@ -24,52 +24,10 @@ namespace MyBGList.Controllers
             _context = context;
         }
 
-        [HttpGet(Name = "GetBoardGames")]
+        [HttpGet(Name = "GetBoardGamesPagedRequest")]
         [EnableCors("AnyOrigin")]
         [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
-        public async Task<ResponseDTO<BoardGame[]>> Get()
-        {
-            var query = _context.BoardGames;
-
-            return new ResponseDTO<BoardGame[]>()
-            {
-                Data = await query.ToArrayAsync(),
-                Links = new List<LinkDTO> { new(Url.Action(null, "BoardGames", null, Request.Scheme)!, "self", "GET") }
-            };
-        }
-
-        [HttpGet("paged", Name = "GetBoardGamesPaged")]
-        [EnableCors("AnyOrigin")]
-        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
-        public async Task<ResponseDTO<BoardGame[]>> GetPaged(int pageIndex = 0,
-            [Range(1, 100)] int pageSize = 10,
-            [SortColumnValidator(typeof(BoardGameDTO))] string? sortColumn = "Name",
-            [SortOrderValidator] string? sortOrder = "ASC",
-            string? filterQuery = null)
-        {
-            var query = _context.BoardGames.AsQueryable();
-
-            if (!string.IsNullOrEmpty(filterQuery))
-                query = query.Where(b => b.Name.StartsWith(filterQuery));
-
-            var recordCount = await query.CountAsync();
-
-            query = query.OrderBy($"{sortColumn} {sortOrder}").Skip(pageIndex * pageSize).Take(pageSize);
-
-            return new ResponseDTO<BoardGame[]>()
-            {
-                PageIndex = pageIndex,
-                PageSize = pageSize,
-                RecordCount = recordCount,
-                Data = await query.ToArrayAsync(),
-                Links = new List<LinkDTO> { new(Url.Action(null, "BoardGames", new { pageIndex, pageSize }, Request.Scheme)!, "self", "GET") }
-            };
-        }
-
-        [HttpGet("pagedRequestDto", Name = "GetBoardGamesPagedRequest")]
-        [EnableCors("AnyOrigin")]
-        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
-        public async Task<ResponseDTO<BoardGame[]>> GetPagedRequestDto([FromQuery] RequestDTO<BoardGameDTO> input)
+        public async Task<ResponseDTO<BoardGame[]>> Get([FromQuery] RequestDTO<BoardGameDTO> input)
         {
             var query = _context.BoardGames.AsQueryable();
 
