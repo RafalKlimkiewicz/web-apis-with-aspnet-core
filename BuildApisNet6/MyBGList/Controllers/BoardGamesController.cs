@@ -1,11 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Linq.Dynamic.Core;
+﻿using System.Linq.Dynamic.Core;
 
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using MyBGList.Attributes;
 using MyBGList.DTO;
 using MyBGList.Models;
 
@@ -29,6 +27,8 @@ namespace MyBGList.Controllers
         [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
         public async Task<ResponseDTO<BoardGame[]>> Get([FromQuery] RequestDTO<BoardGameDTO> input)
         {
+            _logger.LogInformation("Get method started.");
+
             var query = _context.BoardGames.AsQueryable();
 
             if (!string.IsNullOrEmpty(input.FilterQuery))

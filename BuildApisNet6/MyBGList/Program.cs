@@ -8,6 +8,17 @@ using MyBGList.Models;
 using MyBGList.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders().AddSimpleConsole(
+    // moved to appsettings
+    //options =>
+    //{
+    //    options.SingleLine = true;
+    //    options.TimestampFormat = "HH:mm:ss ";
+    //    options.UseUtcTimestamp = true;
+    //}
+).AddDebug();
+
 // Add services to the container.
 //secrects for staging env
 if (builder.Environment.IsStaging() || builder.Environment.EnvironmentName == "Staging")
