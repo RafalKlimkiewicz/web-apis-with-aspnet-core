@@ -1,9 +1,11 @@
 ﻿using System.Diagnostics;
 using System.Linq.Dynamic.Core;
 
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using MyBGList.Attributes;
 using MyBGList.DTO;
 using MyBGList.Models;
 
@@ -27,7 +29,8 @@ namespace MyBGList.Controllers
 
         [HttpGet(Name = "GetDomains")]
         [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
-        //[ManualValidationFilter]
+        [EnableCors("AnyOrigin")]
+        [ManualValidationFilter]
         public async Task<ActionResult<ResponseDTO<Domain[]>>> Get([FromQuery] RequestDTO<DomainDTO> input)
         {
             if (!ModelState.IsValid)
@@ -78,6 +81,7 @@ namespace MyBGList.Controllers
 
         [HttpPost(Name = "UpdateDomain")]
         [ResponseCache(NoStore = true)]
+        [EnableCors("AnyOrigin")]
         public async Task<ResponseDTO<Domain?>> Post(DomainDTO model)
         {
             var domain = await _context.Domains.Where(b => b.Id == model.Id).FirstOrDefaultAsync();
@@ -106,6 +110,7 @@ namespace MyBGList.Controllers
 
         [HttpDelete(Name = "DeleteDomain")]
         [ResponseCache(NoStore = true)]
+        [EnableCors("AnyOrigin")]
         public async Task<ResponseDTO<Domain?>> Delete(int id)
         {
             var domain = await _context.Domains.Where(b => b.Id == id).FirstOrDefaultAsync();

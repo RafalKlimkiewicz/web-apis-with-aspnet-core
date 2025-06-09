@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -52,6 +53,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+//Code replaced by the [ManualValidationFilter] attribute
+//builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true); //remove automatic [ApiController] ModelState validation for API request - custom validation ModelState
+
 var app = builder.Build();
 
 Console.WriteLine($"ASPNETCORE_ENVIRONMENT = {app.Environment.EnvironmentName}");
@@ -71,7 +75,23 @@ if (app.Configuration.GetValue<bool>("UseDeveloperExceptionPage"))
 else
     app.UseExceptionHandler("/error");
 
-app.MapGet("/error", () => Results.Problem()).RequireCors("AnyOrigin"); ;
+app.MapGet("/error",
+    [EnableCors("AnyOrigin")]
+    [ResponseCache(NoStore = true)]
+    (HttpContext context) =>
+         {
+             var exceptionHandler = context.Features.Get<IExceptionHandlerPathFeature>();
+
+             // TODO: logging, sending notifications, and more 
+             var details = new ProblemDetails();
+
+             details.Detail = exceptionHandler?.Error.Message;
+             details.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id ?? context.TraceIdentifier;
+             details.Type ="https://tools.ietf.org/html/rfc7231#section-6.6.1";
+             details.Status = StatusCodes.Status500InternalServerError;
+
+             return Results.Problem(details);
+         }).RequireCors("AnyOrigin");
 
 app.MapGet("/cod/test", [EnableCors("AnyOrigin")][ResponseCache(NoStore = true)] () =>
    Results.Text("<script>" +
