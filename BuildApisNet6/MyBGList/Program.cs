@@ -1,23 +1,86 @@
+using System.Runtime.CompilerServices;
+
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
+using MyBGList.Constants;
 using MyBGList.Models;
 using MyBGList.Swagger;
 
+using Serilog;
+using Serilog.Sinks.MSSqlServer;
+
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.ClearProviders().AddSimpleConsole(
-    // moved to appsettings
-    //options =>
-    //{
-    //    options.SingleLine = true;
-    //    options.TimestampFormat = "HH:mm:ss ";
-    //    options.UseUtcTimestamp = true;
-    //}
+builder.Logging.ClearProviders()
+    .AddJsonConsole(
+        options => {
+            options.TimestampFormat = "HH:mm";
+            options.UseUtcTimestamp = true;
+        }
+    )
+    .AddSimpleConsole(
+// moved to appsettings
+//options =>
+//{
+//    options.SingleLine = true;
+//    options.TimestampFormat = "HH:mm:ss ";
+//    options.UseUtcTimestamp = true;
+//}
 ).AddDebug();
+
+builder.Host.UseSerilog((ctx, lc) =>
+{
+    lc.ReadFrom.Configuration(ctx.Configuration);
+
+    //or appsettings
+    //lc.MinimumLevel.Is(Serilog.Events.LogEventLevel.Warning);
+    //lc.MinimumLevel.Override("MyBGList", Serilog.Events.LogEventLevel.Information);
+
+    lc.Enrich.WithMachineName();
+    lc.Enrich.WithThreadId();
+    lc.Enrich.WithThreadName(); // Excercise 7.5.4
+
+    lc.WriteTo.File("Logs/log.txt",
+        outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] [{MachineName} #{ThreadId} {ThreadName}] {Message:lj}{NewLine}{Exception}",
+        rollingInterval: RollingInterval.Day);
+
+    lc.WriteTo.File("Logs/errors.txt",
+        outputTemplate: "{Timestamp:HH:mm:ss} [{Level:u3}] [{MachineName} #{ThreadId} {ThreadName}] {Message:lj}{NewLine}{Exception}",
+        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Error,
+        rollingInterval: RollingInterval.Day);
+
+
+    lc.WriteTo.MSSqlServer(
+        //restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information,
+        connectionString: ctx.Configuration.GetConnectionString("DefaultConnection"),
+        sinkOptions: new MSSqlServerSinkOptions
+        {
+            TableName = "LogEvents",
+            AutoCreateSqlTable = true
+        },
+        columnOptions: new ColumnOptions()
+        {
+            AdditionalColumns = new SqlColumn[]
+            {
+                new() {
+                    ColumnName = "SourceContext",
+                    PropertyName = "SourceContext",
+                    DataType = System.Data.SqlDbType.NVarChar,
+                },
+                new() {
+                    ColumnName = "EventId",
+                    PropertyName = "EventId",
+                    DataType = System.Data.SqlDbType.NVarChar,
+                }
+            }
+        });
+}, writeToProviders: true);
 
 // Add services to the container.
 //secrects for staging env
@@ -105,31 +168,33 @@ else
 
 app.MapGet("/error",
     [EnableCors("AnyOrigin")]
-[ResponseCache(NoStore = true)] (HttpContext context) =>
+[ResponseCache(NoStore = true)] (HttpContext context, [FromServices] ILogger<Program> logger) =>
     {
-        var exceptionHandler =
-            context.Features.Get<IExceptionHandlerPathFeature>();
+        var exceptionHangler = context.Features.Get<IExceptionHandlerPathFeature>();
 
-        var details = new ProblemDetails();
+        var details = new ProblemDetails
+        {
+            Title = "Error",
+            Detail = exceptionHangler?.Error.Message,
+            Status = exceptionHangler?.Error switch
+            {
+                NotImplementedException _ => StatusCodes.Status501NotImplemented,
+                TimeoutException _ => StatusCodes.Status504GatewayTimeout,
+                _ => StatusCodes.Status500InternalServerError
+            },
+            Type = exceptionHangler?.Error switch
+            {
+                NotImplementedException _ => "https://tools.ietf.org/html/rfc7231#section-6.6.2",
+                TimeoutException _ => "https://tools.ietf.org/html/rfc7231#section-6.6.5",
+                _ => "https://tools.ietf.org/html/rfc7231#section-6.6.1"
+            },
+        };
 
-        details.Detail = exceptionHandler?.Error.Message;
         details.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id ?? context.TraceIdentifier;
 
-        if (exceptionHandler?.Error is NotImplementedException)
-        {
-            details.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.2";
-            details.Status = StatusCodes.Status501NotImplemented;
-        }
-        else if (exceptionHandler?.Error is TimeoutException)
-        {
-            details.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.5";
-            details.Status = StatusCodes.Status504GatewayTimeout;
-        }
-        else
-        {
-            details.Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1";
-            details.Status = StatusCodes.Status500InternalServerError;
-        }
+        logger.LogError(CustomLogEvents.Error_Get, exceptionHangler?.Error, "An unhandled exception occurred.");
+        app.Logger.LogError(CustomLogEvents.Error_Get, exceptionHangler?.Error, "An unhandled exception occurred. {errorMessage}", 
+            exceptionHangler?.Error.Message);
 
         return Results.Problem(details);
     }); //.RequireCors("AnyOrigin");
