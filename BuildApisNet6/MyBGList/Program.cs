@@ -19,7 +19,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders()
     .AddJsonConsole(
-        options => {
+        options =>
+        {
             options.TimestampFormat = "HH:mm";
             options.UseUtcTimestamp = true;
         }
@@ -193,7 +194,7 @@ app.MapGet("/error",
         details.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id ?? context.TraceIdentifier;
 
         logger.LogError(CustomLogEvents.Error_Get, exceptionHangler?.Error, "An unhandled exception occurred.");
-        app.Logger.LogError(CustomLogEvents.Error_Get, exceptionHangler?.Error, "An unhandled exception occurred. {errorMessage}", 
+        app.Logger.LogError(CustomLogEvents.Error_Get, exceptionHangler?.Error, "An unhandled exception occurred. {errorMessage}",
             exceptionHangler?.Error.Message);
 
         return Results.Problem(details);
@@ -210,11 +211,31 @@ app.MapGet("/cod/test", [EnableCors("AnyOrigin")][ResponseCache(NoStore = true)]
    "<noscript>Your client does not support JavaScript</noscript>",
    "text/html"));
 
+app.MapGet("/cache/test/1", [EnableCors("AnyOrigin")]
+(HttpContext context) =>
+{
+    context.Response.Headers["cache-control"] = "no-cache, no-store";
+    return Results.Ok();
+});
+
+app.MapGet("/cache/test/2", [EnableCors("AnyOrigin")]
+(HttpContext context) =>
+{
+    return Results.Ok();
+});
+
+
 app.UseHttpsRedirection();
 
 app.UseCors();
 
 app.UseAuthorization();
+
+app.Use((context, next) =>
+{
+    context.Response.Headers["cache-control"] = "no-cache, no-store";
+    return next.Invoke();
+});
 
 app.MapControllers().RequireCors("AnyOrigin");
 
