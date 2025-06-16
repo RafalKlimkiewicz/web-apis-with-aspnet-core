@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Runtime.CompilerServices;
 
 using Microsoft.AspNetCore.Cors;
@@ -96,6 +97,13 @@ builder.Services.AddControllers(options =>
     options.ModelBindingMessageProvider.SetValueMustBeANumberAccessor((x) => $"The field {x} must be a number.");
     options.ModelBindingMessageProvider.SetAttemptedValueIsInvalidAccessor((x, y) => $"The value '{x}' is not valid for {y}.");
     options.ModelBindingMessageProvider.SetMissingKeyOrValueAccessor(() => $"A value is required.");
+
+    options.CacheProfiles.Add("NoCache", new CacheProfile() { NoStore = true });
+    options.CacheProfiles.Add("Any-60", new CacheProfile()
+    {
+        Location = ResponseCacheLocation.Any,
+        Duration = 60
+    });
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -125,11 +133,32 @@ builder.Services.AddCors(options =>
         });
 });
 
-
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 //Code replaced by the [ManualValidationFilter] attribute
 //builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true); //remove automatic [ApiController] ModelState validation for API request - custom validation ModelState
+
+builder.Services.AddResponseCaching(options =>
+{
+    options.MaximumBodySize = 32 * 1024 * 1024; //Sets max response body size to 32 MB //
+    options.SizeLimit = 50 * 1024 * 1024; //Sets max middleware size to 50 MB
+});
+
+//dotnet sql-cache create "{connectionString}" dbo AppCache
+builder.Services.AddDistributedSqlServerCache(options =>
+{
+    options.ConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.SchemaName = "dbo";
+    options.TableName = "AppCache";
+});
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration["Redis:ConnectionString"];
+});
+
+
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
@@ -229,11 +258,19 @@ app.UseHttpsRedirection();
 
 app.UseCors();
 
+app.UseResponseCaching();
+
 app.UseAuthorization();
 
+//fallback for no cache if missed
 app.Use((context, next) =>
 {
-    context.Response.Headers["cache-control"] = "no-cache, no-store";
+    //context.Response.Headers["cache-control"] = "no-cache, no-store"; //or strong typed
+    context.Response.GetTypedHeaders().CacheControl = new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+    {
+        NoCache = true,
+        NoStore = true
+    };
     return next.Invoke();
 });
 

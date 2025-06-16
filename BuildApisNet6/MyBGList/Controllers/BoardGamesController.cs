@@ -1,8 +1,10 @@
 ﻿using System.Linq.Dynamic.Core;
+using System.Text.Json;
 
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 using MyBGList.Constants;
 using MyBGList.DTO;
@@ -16,16 +18,18 @@ namespace MyBGList.Controllers
     {
         private readonly ILogger<BoardGamesController> _logger;
         private readonly ApplicationDbContext _context;
+        private readonly IMemoryCache _memoryCache;
 
-        public BoardGamesController(ILogger<BoardGamesController> logger, ApplicationDbContext context)
+        public BoardGamesController(ILogger<BoardGamesController> logger, ApplicationDbContext context, IMemoryCache memoryCache)
         {
             _logger = logger;
             _context = context;
+            _memoryCache = memoryCache;
         }
 
         [HttpGet(Name = "GetBoardGamesPagedRequest")]
         [EnableCors("AnyOrigin")]
-        [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 60)]
+        [ResponseCache(CacheProfileName = "Any-60")]
         public async Task<ResponseDTO<BoardGame[]>> Get([FromQuery] RequestDTO<BoardGameDTO> input)
         {
             _logger.LogInformation(CustomLogEvents.BoardGamesController_Get, "Get method started at {0:HH:mm}", DateTime.Now);
@@ -37,16 +41,23 @@ namespace MyBGList.Controllers
             if (!string.IsNullOrEmpty(input.FilterQuery))
                 query = query.Where(b => b.Name.StartsWith(input.FilterQuery));
 
-            var recordCount = await query.CountAsync();
+            var cacheKey = $"{input.GetType()}-{JsonSerializer.Serialize(input)}";
 
-            query = query.OrderBy($"{input.SortColumn} {input.SortOrder}").Skip(input.PageIndex * input.PageSize).Take(input.PageSize);
+            if (!_memoryCache.TryGetValue(cacheKey, out BoardGame[]? result))
+            {
+                query = query.OrderBy($"{input.SortColumn} {input.SortOrder}").Skip(input.PageIndex * input.PageSize).Take(input.PageSize);
+                
+                result = await query.ToArrayAsync();
+
+                _memoryCache.Set(cacheKey, result, new TimeSpan(0, 0, 30));
+            }
 
             return new ResponseDTO<BoardGame[]>()
             {
                 PageIndex = input.PageIndex,
                 PageSize = input.PageSize,
-                RecordCount = recordCount,
-                Data = await query.ToArrayAsync(),
+                RecordCount = await query.CountAsync(),
+                Data = result ?? Array.Empty<BoardGame>(),
                 Links = new List<LinkDTO> { new(Url.Action(null, "BoardGames", new { input.PageIndex, input.PageSize }, Request.Scheme)!, "self", "GET") }
             };
         }
