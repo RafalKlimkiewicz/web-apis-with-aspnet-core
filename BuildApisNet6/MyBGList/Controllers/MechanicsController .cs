@@ -1,6 +1,7 @@
 ﻿using System.Linq.Dynamic.Core;
 using System.Text.Json;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -60,6 +61,7 @@ public class MechanicsController : ControllerBase
         };
     }
 
+    [Authorize]
     [HttpPost(Name = "UpdateMechanic")]
     [ResponseCache(NoStore = true)]
     public async Task<ResponseDTO<Mechanic?>> Post(MechanicDTO model)
@@ -86,6 +88,7 @@ public class MechanicsController : ControllerBase
         };
     }
 
+    [Authorize]
     [HttpDelete(Name = "DeleteMechanic")]
     [ResponseCache(NoStore = true)]
     public async Task<ResponseDTO<Mechanic?>> Delete(int id)

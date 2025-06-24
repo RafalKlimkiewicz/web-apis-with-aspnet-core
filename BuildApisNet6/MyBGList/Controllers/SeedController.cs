@@ -3,6 +3,7 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,7 @@ using MyBGList.Models.Csv;
 
 namespace MyBGList.Controllers;
 
+[Authorize]
 [Route("[controller]")]
 [ApiController]
 public class SeedController : ControllerBase
@@ -25,7 +27,7 @@ public class SeedController : ControllerBase
         _logger = logger;
         _env = env;
     }
-
+    
     [HttpPut(Name = "Seed")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(NoStore = true)]
@@ -153,6 +155,15 @@ public class SeedController : ControllerBase
             Mechanics: await _context.Mechanics.CountAsync(),
             SkippedRows: skippedRows
         ));
+    }
+
+    [AllowAnonymous]
+    [HttpGet(Name = "Test")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ResponseCache(NoStore = true)]
+    public ActionResult<string> Test(string input)
+    {
+        return Content(input, "text/plain");
     }
 }
 

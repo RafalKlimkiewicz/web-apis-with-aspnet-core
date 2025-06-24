@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Linq.Dynamic.Core;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,8 +20,7 @@ namespace MyBGList.Controllers
 
         private readonly ILogger<DomainsController> _logger;
 
-        public DomainsController(
-            ApplicationDbContext context,
+        public DomainsController(ApplicationDbContext context,
             ILogger<DomainsController> logger)
         {
             _context = context;
@@ -79,9 +79,10 @@ namespace MyBGList.Controllers
             };
         }
 
+        [Authorize]
         [HttpPost(Name = "UpdateDomain")]
         [ResponseCache(NoStore = true)]
-        [EnableCors("AnyOrigin")]
+        //[EnableCors("AnyOrigin")]
         [ManualValidationFilter]
         public async Task<ActionResult<ResponseDTO<Domain?>>> Post(DomainDTO model)
         {
@@ -137,9 +138,10 @@ namespace MyBGList.Controllers
             };
         }
 
+        [Authorize]
         [HttpDelete(Name = "DeleteDomain")]
         [ResponseCache(NoStore = true)]
-        [EnableCors("AnyOrigin")]
+        //[EnableCors("AnyOrigin")]
         public async Task<ResponseDTO<Domain?>> Delete(int id)
         {
             var domain = await _context.Domains.Where(b => b.Id == id).FirstOrDefaultAsync();

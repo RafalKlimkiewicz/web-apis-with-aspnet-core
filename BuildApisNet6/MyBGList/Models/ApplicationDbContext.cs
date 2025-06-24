@@ -1,8 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace MyBGList.Models;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApiUser>
 {
     public DbSet<BoardGame> BoardGames => Set<BoardGame>();
     public DbSet<Domain> Domains => Set<Domain>();
@@ -19,6 +21,14 @@ public class ApplicationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        //modelBuilder.Entity<ApiUser>().ToTable("ApiUsers");
+        //modelBuilder.Entity<IdentityRole<string>>().ToTable("ApiRoles");
+        //modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("ApiRoleClaims");
+        //modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("ApiUserClaims");
+        //modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("ApiUserLogins");
+        //modelBuilder.Entity<IdentityUserRole<string>>().ToTable("ApiRoles");
+        //modelBuilder.Entity<IdentityUserToken<string>>().ToTable("ApiUserTokens");
 
         modelBuilder.Entity<BoardGames_Domains>().HasKey(i => new { i.BoardGameId, i.DomainId });
 

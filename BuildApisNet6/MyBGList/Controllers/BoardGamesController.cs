@@ -1,6 +1,7 @@
 ﻿using System.Linq.Dynamic.Core;
 using System.Text.Json;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +63,7 @@ namespace MyBGList.Controllers
             };
         }
 
+        [Authorize]
         [HttpPost(Name = "UpdateBoardGame")]
         [ResponseCache(NoStore = true)]
         public async Task<ResponseDTO<BoardGame?>> Post(BoardGameDTO model)
@@ -106,6 +108,7 @@ namespace MyBGList.Controllers
             };
         }
 
+        [Authorize]
         [HttpDelete(Name = "DeleteBoardGame")]
         [ResponseCache(NoStore = true)]
         public async Task<ResponseDTO<BoardGame[]?>> Delete(string idList)
