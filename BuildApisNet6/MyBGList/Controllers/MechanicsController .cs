@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Caching.Distributed;
 
+using MyBGList.Constants;
 using MyBGList.DTO;
 using MyBGList.Extensions;
 using MyBGList.Models;
@@ -61,6 +62,7 @@ public class MechanicsController : ControllerBase
         };
     }
 
+    [Authorize(Roles = RoleNames.Moderator)]
     [Authorize]
     [HttpPost(Name = "UpdateMechanic")]
     [ResponseCache(NoStore = true)]
@@ -88,7 +90,7 @@ public class MechanicsController : ControllerBase
         };
     }
 
-    [Authorize]
+    [Authorize(Roles = RoleNames.Administrator)]
     [HttpDelete(Name = "DeleteMechanic")]
     [ResponseCache(NoStore = true)]
     public async Task<ResponseDTO<Mechanic?>> Delete(int id)

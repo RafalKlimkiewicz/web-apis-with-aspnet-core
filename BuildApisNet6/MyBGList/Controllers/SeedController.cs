@@ -4,34 +4,45 @@ using CsvHelper;
 using CsvHelper.Configuration;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using MyBGList.Constants;
 using MyBGList.Models;
 using MyBGList.Models.Csv;
 
 namespace MyBGList.Controllers;
 
 [Authorize]
-[Route("[controller]")]
+[Route("[controller]/[action]")]
 [ApiController]
 public class SeedController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<SeedController> _logger;
     private readonly IWebHostEnvironment _env;
+    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly UserManager<ApiUser> _userManager;
 
-    public SeedController(ApplicationDbContext context, ILogger<SeedController> logger, IWebHostEnvironment env)
+    public SeedController(ApplicationDbContext context,
+        ILogger<SeedController> logger,
+        IWebHostEnvironment env,
+        RoleManager<IdentityRole> roleManager,
+        UserManager<ApiUser> userManager)
     {
         _context = context;
         _logger = logger;
         _env = env;
+        _roleManager = roleManager;
+        _userManager = userManager;
     }
-    
-    [HttpPut(Name = "Seed")]
+
+    [Authorize(Roles = RoleNames.Administrator)]
+    [HttpPut]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(NoStore = true)]
-    public async Task<ActionResult<SeedResult>> Seed(int? id = null)
+    public async Task<ActionResult<SeedResult>> BoardGameData(int? id = null)
     {
         var config = new CsvConfiguration(CultureInfo.GetCultureInfo("pt-BR"))
         {
@@ -53,7 +64,7 @@ public class SeedController : ControllerBase
 
         foreach (var record in records)
         {
-            if (!record.ID.HasValue || string.IsNullOrEmpty(record.Name) 
+            if (!record.ID.HasValue || string.IsNullOrEmpty(record.Name)
                 || existingBoardGames.ContainsKey(record.ID.Value)
                 || (id.HasValue && id.Value != record.ID.Value))
             {
@@ -157,8 +168,57 @@ public class SeedController : ControllerBase
         ));
     }
 
+    [Authorize(Roles = RoleNames.Administrator)]
     [AllowAnonymous]
-    [HttpGet(Name = "Test")]
+    [HttpPost]
+    [ResponseCache(NoStore = true)]
+    public async Task<IActionResult> AuthData()
+    {
+        int rolesCreated = 0;
+        int usersAddedToRoles = 0;
+
+        if (!await _roleManager.RoleExistsAsync(RoleNames.Moderator))
+        {
+            await _roleManager.CreateAsync(new IdentityRole(RoleNames.Moderator));
+
+            rolesCreated++;
+        }
+
+        if (!await _roleManager.RoleExistsAsync(RoleNames.Administrator))
+        {
+            await _roleManager.CreateAsync(new IdentityRole(RoleNames.Administrator)); 
+
+            rolesCreated++;
+        }
+
+        var testModerator = await _userManager.FindByNameAsync("TestModerator");
+
+        if (testModerator != null && !await _userManager.IsInRoleAsync(testModerator, RoleNames.Moderator))
+        {
+            await _userManager.AddToRoleAsync(testModerator, RoleNames.Moderator);
+
+            usersAddedToRoles++;
+        }
+
+        var testAdministrator = await _userManager.FindByNameAsync("TestAdministrator");
+
+        if (testAdministrator != null && !await _userManager.IsInRoleAsync(testAdministrator, RoleNames.Administrator))
+        {
+            await _userManager.AddToRoleAsync(testAdministrator, RoleNames.Moderator);
+            await _userManager.AddToRoleAsync(testAdministrator, RoleNames.Administrator);
+
+            usersAddedToRoles++;
+        }
+
+        return new JsonResult(new
+        {
+            RolesCreated = rolesCreated,
+            UsersAddedToRoles = usersAddedToRoles
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ResponseCache(NoStore = true)]
     public ActionResult<string> Test(string input)

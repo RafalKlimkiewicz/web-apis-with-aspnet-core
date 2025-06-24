@@ -321,6 +321,22 @@ app.MapGet("/auth/test/1",
        return Results.Ok("You are authorized!");
    });
 
+app.MapGet("/auth/test/2",
+[Authorize(Roles = RoleNames.Moderator)]
+[EnableCors("AnyOrigin")]
+[ResponseCache(NoStore = true)] () =>
+    {
+        return Results.Ok("You are authorized!");
+    });
+
+app.MapGet("/auth/test/3",
+[Authorize(Roles = RoleNames.Administrator)]
+[EnableCors("AnyOrigin")]
+[ResponseCache(NoStore = true)] () =>
+   {
+       return Results.Ok("You are authorized!");
+   });
+
 app.UseHttpsRedirection();
 
 app.UseCors();

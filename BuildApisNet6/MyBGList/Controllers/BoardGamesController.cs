@@ -63,7 +63,7 @@ namespace MyBGList.Controllers
             };
         }
 
-        [Authorize]
+        [Authorize(Roles = RoleNames.Moderator)]
         [HttpPost(Name = "UpdateBoardGame")]
         [ResponseCache(NoStore = true)]
         public async Task<ResponseDTO<BoardGame?>> Post(BoardGameDTO model)
@@ -108,7 +108,7 @@ namespace MyBGList.Controllers
             };
         }
 
-        [Authorize]
+        [Authorize(Roles = RoleNames.Administrator)]
         [HttpDelete(Name = "DeleteBoardGame")]
         [ResponseCache(NoStore = true)]
         public async Task<ResponseDTO<BoardGame[]?>> Delete(string idList)

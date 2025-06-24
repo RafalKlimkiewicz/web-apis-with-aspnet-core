@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.Buffers.Text;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
@@ -8,6 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 
 using MyBGList.DTO;
 using MyBGList.Models;
+
+using StackExchange.Redis;
 
 namespace MyBGList.Controllers;
 
@@ -106,6 +109,8 @@ public class AccountController : ControllerBase
                 {
                     new(ClaimTypes.Name, user.UserName)
                 };
+
+                claims.AddRange((await _userManager.GetRolesAsync(user)).Select(r => new Claim(ClaimTypes.Role, r)));
 
                 var jwtObject = new JwtSecurityToken(
                     issuer: _configuration["JWT:Issuer"],
