@@ -191,6 +191,13 @@ public class SeedController : ControllerBase
             rolesCreated++;
         }
 
+        if (!await _roleManager.RoleExistsAsync(RoleNames.SuperAdmin))
+        {
+            await _roleManager.CreateAsync(new IdentityRole(RoleNames.SuperAdmin));
+
+            rolesCreated++;
+        }
+
         var testModerator = await _userManager.FindByNameAsync("TestModerator");
 
         if (testModerator != null && !await _userManager.IsInRoleAsync(testModerator, RoleNames.Moderator))
@@ -209,6 +216,18 @@ public class SeedController : ControllerBase
 
             usersAddedToRoles++;
         }
+
+        var testSuperAdministrator = await _userManager.FindByNameAsync("TestSuperAdministrator");
+
+        if (testSuperAdministrator != null && !await _userManager.IsInRoleAsync(testSuperAdministrator, RoleNames.Administrator))
+        {
+            await _userManager.AddToRoleAsync(testSuperAdministrator, RoleNames.Moderator);
+            await _userManager.AddToRoleAsync(testSuperAdministrator, RoleNames.Administrator);
+            await _userManager.AddToRoleAsync(testSuperAdministrator, RoleNames.SuperAdmin);
+
+            usersAddedToRoles++;
+        }
+        
 
         return new JsonResult(new
         {

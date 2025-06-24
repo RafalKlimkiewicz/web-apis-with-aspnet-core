@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
@@ -193,6 +195,21 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddAuthorization(options =>
+{
+    //[Authorize(Policy = "ModeratorWithMobilePhone")]
+    options.AddPolicy("ModeratorWithMobilePhone", policy => policy
+        .RequireClaim(ClaimTypes.Role, RoleNames.Moderator)
+        .RequireClaim(ClaimTypes.MobilePhone));
+
+    //[Authorize(Policy = "MinAge18")]
+    options.AddPolicy("MinAge18", policy => policy
+        .RequireAssertion(ctx =>
+            ctx.User.HasClaim(c => c.Type == ClaimTypes.DateOfBirth) &&
+                DateTime.ParseExact("yyyyMMdd", ctx.User.Claims
+                .First(c => c.Type == ClaimTypes.DateOfBirth).Value, System.Globalization.CultureInfo.InvariantCulture) >= DateTime.Now.AddYears(-18)));
+});
+
 builder.Services.AddResponseCaching(options =>
 {
     options.MaximumBodySize = 32 * 1024 * 1024; //Sets max response body size to 32 MB //
@@ -336,6 +353,15 @@ app.MapGet("/auth/test/3",
    {
        return Results.Ok("You are authorized!");
    });
+
+app.MapGet("/auth/test/4",
+[Authorize(Roles = RoleNames.SuperAdmin)]
+[EnableCors("AnyOrigin")]
+[ResponseCache(NoStore = true)] () =>
+{
+    return Results.Ok("You are authorized!");
+});
+
 
 app.UseHttpsRedirection();
 
