@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 using MyBGList.Constants;
+using MyBGList.GraphQL;
 using MyBGList.Models;
 using MyBGList.Swagger;
 
@@ -161,6 +162,14 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddGraphQLServer()
+    .AddAuthorization()
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>()
+    .AddProjections()
+    .AddFiltering()
+    .AddSorting();
 
 //Code replaced by the [ManualValidationFilter] attribute
 //builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true); //remove automatic [ApiController] ModelState validation for API request - custom validation ModelState
@@ -371,6 +380,8 @@ app.UseResponseCaching();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapGraphQL();
 
 //fallback for no cache if missed
 app.Use((context, next) =>

@@ -81,11 +81,11 @@ public class AccountController : ControllerBase
 
             return StatusCode(StatusCodes.Status500InternalServerError, exceptionDetails);
             //or
-            return Problem(
-                detail: e.Message,
-                statusCode: StatusCodes.Status500InternalServerError,
-                type: "https://tools.ietf.org/html/rfc7231#section-6.6.1"
-            );
+            //return Problem(
+            //    detail: e.Message,
+            //    statusCode: StatusCodes.Status500InternalServerError,
+            //    type: "https://tools.ietf.org/html/rfc7231#section-6.6.1"
+            //);
 
         }
     }

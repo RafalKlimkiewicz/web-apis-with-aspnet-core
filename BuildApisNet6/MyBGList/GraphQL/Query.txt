@@ -1,0 +1,31 @@
+
+query {
+  boardGames(order: { id: ASC }, first:3 ) { 
+    nodes {
+      id
+      name
+      year
+      boardGames_Domains {
+ domain {
+  name
+ }
+      }
+      boardGames_Mechanics {
+ mechanic {
+  name
+ }
+      }
+    }
+  }
+ }
+
+
+
+ mutation {
+  updateBoardGame(model: { 
+    id:1
+    name:"Die Macher (v2)"
+   }) {
+     name
+  }
+  }
