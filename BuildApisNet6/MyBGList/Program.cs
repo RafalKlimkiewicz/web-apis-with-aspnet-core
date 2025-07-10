@@ -6,12 +6,14 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 using MyBGList.Constants;
 using MyBGList.GraphQL;
+using MyBGList.gRPC;
 using MyBGList.Models;
 using MyBGList.Swagger;
 
@@ -163,6 +165,15 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenLocalhost(40443, listenOptions =>
+    {
+        listenOptions.UseHttps();
+        listenOptions.Protocols = HttpProtocols.Http2;
+    });
+});
+
 builder.Services.AddGraphQLServer()
     .AddAuthorization()
     .AddQueryType<Query>()
@@ -170,6 +181,8 @@ builder.Services.AddGraphQLServer()
     .AddProjections()
     .AddFiltering()
     .AddSorting();
+
+builder.Services.AddGrpc();
 
 //Code replaced by the [ManualValidationFilter] attribute
 //builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true); //remove automatic [ApiController] ModelState validation for API request - custom validation ModelState
@@ -382,6 +395,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGraphQL();
+
+app.MapGrpcService<GrpcService>();
 
 //fallback for no cache if missed
 app.Use((context, next) =>
