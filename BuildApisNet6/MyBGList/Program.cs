@@ -282,7 +282,11 @@ Console.WriteLine($"ASPNETCORE_ENVIRONMENT = {app.Environment.EnvironmentName}")
 if (app.Configuration.GetValue<bool>("UseSwagger"))
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.ConfigObject.AdditionalItems["showCommonExtensions"] = true;
+        options.ConfigObject.AdditionalItems["showExtensions"] = true;
+    });
 }
 
 if (app.Configuration.GetValue<bool>("UseDeveloperExceptionPage"))
