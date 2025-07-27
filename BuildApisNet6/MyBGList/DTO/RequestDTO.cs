@@ -17,9 +17,11 @@ namespace MyBGList.DTO
 
         [DefaultValue("Name")]
         // [SortColumnValidator(typeof(BoardGameDTO))] after <T> generic to- > Validate
+        [CustomKeyValue("test-3", "Year")]
         public string? SortColumn { get; set; } = "Name";
 
         [DefaultValue("ASC")]
+        [CustomKeyValue("test-3", "DESC")]
         [SortOrderValidator]
         public string? SortOrder { get; set; } = "ASC";
 

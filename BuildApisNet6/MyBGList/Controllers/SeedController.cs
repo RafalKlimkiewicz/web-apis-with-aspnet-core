@@ -17,6 +17,7 @@ using Path = System.IO.Path;
 namespace MyBGList.Controllers;
 
 [Authorize]
+[ApiExplorerSettings(IgnoreApi = true)]
 [Route("[controller]/[action]")]
 [ApiController]
 public class SeedController : ControllerBase

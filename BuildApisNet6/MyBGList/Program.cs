@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -19,6 +20,8 @@ using MyBGList.Swagger;
 
 using Serilog;
 using Serilog.Sinks.MSSqlServer;
+
+using Swashbuckle.AspNetCore.Annotations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -113,6 +116,8 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    options.EnableAnnotations();
+
     options.ParameterFilter<SortColumnFilter>();
     options.ParameterFilter<SortOrderFilter>();
 
@@ -126,23 +131,34 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "bearer"
     });
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
+
+    //options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    //{
+    //    {
+    //        new OpenApiSecurityScheme
+    //        {
+    //            Reference = new OpenApiReference
+    //            {
+    //                Type = ReferenceType.SecurityScheme,
+    //                Id = "Bearer"
+    //            }
+    //        },
+    //        Array.Empty<string>()
+    //    }
+    //});
+
+    //replacing above - padlock in swaggerUI disaper for public operations
+    options.OperationFilter<AuthRequirementFilter>();
+    options.DocumentFilter<CustomDocumentFilter>();
+    options.RequestBodyFilter<PasswordRequestFilter>();
+    options.SchemaFilter<CustomKeyValueFilter>();
 
     options.ResolveConflictingActions(apiDesc => apiDesc.First());
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "MyBGList", Version = "v1.0" });
+
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(System.IO.Path.Combine(
+AppContext.BaseDirectory, xmlFilename));
 });
 
 builder.Services.AddCors(options =>
@@ -165,14 +181,15 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenLocalhost(40443, listenOptions =>
-    {
-        listenOptions.UseHttps();
-        listenOptions.Protocols = HttpProtocols.Http2;
-    });
-});
+
+//builder.WebHost.ConfigureKestrel((context, options) =>
+//{
+//    options.ListenLocalhost(40443, listenOptions =>
+//    {
+//        listenOptions.UseHttps();
+//        listenOptions.Protocols = HttpProtocols.Http2;
+//    });
+//});
 
 builder.Services.AddGraphQLServer()
     .AddAuthorization()
@@ -186,7 +203,7 @@ builder.Services.AddGrpc();
 
 //Code replaced by the [ManualValidationFilter] attribute
 //builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true); //remove automatic [ApiController] ModelState validation for API request - custom validation ModelState
-
+Console.WriteLine($"PreferHostingUrls: {builder.Configuration["PreferHostingUrls"]}");
 builder.Services.AddIdentity<ApiUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -345,8 +362,13 @@ app.MapGet("/cache/test/1",
     });
 
 app.MapGet("/cache/test/2",
+[Authorize]
 [EnableCors("AnyOrigin")]
-(HttpContext context) =>
+[SwaggerOperation(
+    Tags = new[] { "Auth" },
+    Summary = "Auth test #2 (authenticated users).",
+    Description = "Returns 200 - OK if called by an authenticated user regardless of its role(s).")]
+    (HttpContext context) =>
     {
         return Results.Ok();
     });
@@ -355,6 +377,10 @@ app.MapGet("/cache/test/2",
 app.MapGet("/auth/test/1",
 [Authorize]
 [EnableCors("AnyOrigin")]
+[SwaggerOperation(
+    Tags = new[] { "Auth" },
+    Summary = "Auth test #1 (authenticated users).",
+    Description = "Returns 200 - OK if called by an authenticated user regardless of its role(s).")]
 [ResponseCache(NoStore = true)] () =>
    {
        return Results.Ok("You are authorized!");
@@ -363,12 +389,20 @@ app.MapGet("/auth/test/1",
 app.MapGet("/auth/test/2",
 [Authorize(Roles = RoleNames.Moderator)]
 [EnableCors("AnyOrigin")]
+[SwaggerOperation(
+    Tags = new[] { "Auth" },
+    Summary = "Auth test #2 (authenticated users).",
+    Description = "Returns 200 - OK if called by an authenticated user regardless of its role(s).")]
 [ResponseCache(NoStore = true)] () =>
     {
         return Results.Ok("You are authorized!");
     });
 
 app.MapGet("/auth/test/3",
+    [SwaggerOperation(
+    Tags = new[] { "Auth" },
+    Summary = "Auth test #3 (authenticated users).",
+    Description = "Returns 200 - OK if called by an authenticated user regardless of its role(s).")]
 [Authorize(Roles = RoleNames.Administrator)]
 [EnableCors("AnyOrigin")]
 [ResponseCache(NoStore = true)] () =>
@@ -379,6 +413,10 @@ app.MapGet("/auth/test/3",
 app.MapGet("/auth/test/4",
 [Authorize(Roles = RoleNames.SuperAdmin)]
 [EnableCors("AnyOrigin")]
+[SwaggerOperation(
+    Tags = new[] { "Auth" },
+    Summary = "Auth test #4 (authenticated users).",
+    Description = "Returns 200 - OK if called by an authenticated user regardless of its role(s).")]
 [ResponseCache(NoStore = true)] () =>
 {
     return Results.Ok("You are authorized!");

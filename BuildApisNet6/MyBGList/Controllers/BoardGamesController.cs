@@ -11,6 +11,8 @@ using MyBGList.Constants;
 using MyBGList.DTO;
 using MyBGList.Models;
 
+using Swashbuckle.AspNetCore.Annotations;
+
 namespace MyBGList.Controllers
 {
     [ApiController]
@@ -28,10 +30,16 @@ namespace MyBGList.Controllers
             _memoryCache = memoryCache;
         }
 
+        [SwaggerOperation(Summary = "Get a list of board games.", Description = "Retrieves a list of board games with custom paging, sorting, and filtering rules.")]
+        [SwaggerResponse(StatusCodes.Status200OK, "Authorized")]
+        [SwaggerResponse(StatusCodes.Status401Unauthorized, "Not authorized")]
         [HttpGet(Name = "GetBoardGamesPagedRequest")]
         [EnableCors("AnyOrigin")]
         [ResponseCache(CacheProfileName = "Any-60")]
-        public async Task<ResponseDTO<BoardGame[]>> Get([FromQuery] RequestDTO<BoardGameDTO> input)
+        public async Task<ResponseDTO<BoardGame[]>> Get(
+            [FromQuery]
+            [SwaggerParameter("A DTO object that can be used to customize the data-retrieval parameters.")]
+            RequestDTO<BoardGameDTO> input)
         {
             _logger.LogInformation(CustomLogEvents.BoardGamesController_Get, "Get method started at {0:HH:mm}", DateTime.Now);
             _logger.LogInformation(CustomLogEvents.BoardGamesController_Get, "Get method started [{MachineName}] [{ThreadId}].",
@@ -47,7 +55,7 @@ namespace MyBGList.Controllers
             if (!_memoryCache.TryGetValue(cacheKey, out BoardGame[]? result))
             {
                 query = query.OrderBy($"{input.SortColumn} {input.SortOrder}").Skip(input.PageIndex * input.PageSize).Take(input.PageSize);
-                
+
                 result = await query.ToArrayAsync();
 
                 _memoryCache.Set(cacheKey, result, new TimeSpan(0, 0, 30));
@@ -63,6 +71,8 @@ namespace MyBGList.Controllers
             };
         }
 
+        //[SwaggerOperation(Summary = "Get a single board game.", Description = "Retrieves a single board game with the given Id.")]
+        [SwaggerOperation(Summary = "Updates a board game.", Description = "Updates the board game's data.")]
         [Authorize(Roles = RoleNames.Moderator)]
         [HttpPost(Name = "UpdateBoardGame")]
         [ResponseCache(NoStore = true)]
@@ -108,6 +118,7 @@ namespace MyBGList.Controllers
             };
         }
 
+        [SwaggerOperation(Summary = "Deletes a board game.", Description = "Deletes a board game from the database.")]
         [Authorize(Roles = RoleNames.Administrator)]
         [HttpDelete(Name = "DeleteBoardGame")]
         [ResponseCache(NoStore = true)]
