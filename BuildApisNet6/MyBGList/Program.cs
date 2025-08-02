@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -279,13 +278,53 @@ Console.WriteLine($"ASPNETCORE_ENVIRONMENT = {app.Environment.EnvironmentName}")
 app.Logger.LogInformation("Hosting environment: {Env}", app.Environment.EnvironmentName);
 Console.WriteLine($"ASPNETCORE_ENVIRONMENT = {app.Environment.EnvironmentName}");
 
-if (app.Configuration.GetValue<bool>("UseSwagger"))
+if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
+
+    if (app.Configuration.GetValue<bool>("UseSwagger"))
     {
-        options.ConfigObject.AdditionalItems["showCommonExtensions"] = true;
-        options.ConfigObject.AdditionalItems["showExtensions"] = true;
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
+        {
+            options.ConfigObject.AdditionalItems["showCommonExtensions"] = true;
+            options.ConfigObject.AdditionalItems["showExtensions"] = true;
+        });
+    }
+}
+else
+{
+    // HTTP Security Headers
+    // HTTP Strict Transport Security (HSTS)—Tells the web browser to access the web
+    // server over HTTPS only, ensuring that each connection will be established only
+    // through secure channels.
+    app.UseHsts();
+    app.Use(async (context, next) =>
+    {
+        //X - Frame - Options—Protects against clickjacking(http://mng.bz/51y4) by pre
+        //venting FRAMEs and IFRAMEs from specific sources (such as different web
+        //servers) from loading on your site.
+        context.Response.Headers.Add("X-Frame-Options", "sameorigin");
+        //X - XSS - Protection—Protects against cross - site scripting(XSS) by enabling a spe
+        //cific filter built into most modern browsers.Although XSS filtering is active by
+        //default in most modern browsers, it’s advisable to enable(and configure) it
+        //explicitly to strengthen our website even more.
+        context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
+        //X - Content - Type - Options—Prevents the browser from downloading, viewing, and / or
+        //executing a response that differs from the expected and declared content type,
+        //thus reducing the risk of executing malicious software or downloading harm
+        //ful files.
+        context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+        //Content security policy—Prevents attacks such as XSS and other code - injection
+        //based attacks by defining which content the browser should and shouldn’t load.
+        context.Response.Headers.Add("Content-Security-Policy", "default-src ' self' ;");
+        //Referrer policy—Determines whether the URL of the web page that linked to the
+        //requested resource has to be sent along with the request(using the Referer
+        //HTTP Header).The default behavior, if no value is specified, is to strip that
+        //header(and hence the referrer info) when going from a page using HTTPS to
+        //a page using unsecure HTTP and leaving it in all other cases.
+        context.Response.Headers.Add("Referrer-Policy", "strict-origin");
+
+        await next();
     });
 }
 
@@ -372,7 +411,7 @@ app.MapGet("/cache/test/2",
     Tags = new[] { "Auth" },
     Summary = "Auth test #2 (authenticated users).",
     Description = "Returns 200 - OK if called by an authenticated user regardless of its role(s).")]
-    (HttpContext context) =>
+(HttpContext context) =>
     {
         return Results.Ok();
     });
